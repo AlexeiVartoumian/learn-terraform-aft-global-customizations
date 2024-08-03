@@ -9,7 +9,7 @@ resource "aws_sns_topic" "aft_notifications" {
     name = "aft-global-notifications"
 
     tags = {
-        Nmae="AFT Global notifications"
+        Name="AFT Global notifications"
         Environment = "Production"
         Managed_By = "Terraform"
     }
@@ -29,7 +29,7 @@ resource "aws_sns_topic_policy" "default" {
                     Service = "events.amazonaws.com"
                 }
                 Action = "SNS:Publish"
-                Resource = aws_sns_topic.aft_notification.arn
+                Resource = aws_sns_topic.aft_notifications.arn
             }
         ]
     })
