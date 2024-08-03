@@ -16,21 +16,46 @@ resource "aws_sns_topic" "aft_notifications" {
 }
 
 resource "aws_sns_topic_policy" "default" {
-    arn = aws_sns_topic.aft_notifications.arn
+  arn = aws_sns_topic.aft_notifications.arn
 
-    policy = jsonencode({
-        Version = "2021-10-17"
-        Id = "aft-sns-topic-policy"
-        Statement = [
-            {
-                Sid = "AllowPublishFromAFT"
-                Effect = "Allow"
-                Principal = {
-                    Service = "events.amazonaws.com"
-                }
-                Action = "SNS:Publish"
-                Resource = aws_sns_topic.aft_notifications.arn
-            }
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Id      = "AFTSNSTopicPolicy"
+    Statement = [
+      {
+        Sid    = "AllowAWSEventsPublish"
+        Effect = "Allow"
+        Principal = {
+          Service = "events.amazonaws.com"
+        }
+        Action   = "SNS:Publish"
+        Resource = aws_sns_topic.aft_notifications.arn
+      },
+      {
+        Sid    = "AllowAFTAccountManagement"
+        Effect = "Allow"
+        Principal = {
+          AWS = "*"  // This allows any AWS account, which might be too permissive
+        }
+        Action = [
+          "SNS:GetTopicAttributes",
+          "SNS:SetTopicAttributes",
+          "SNS:AddPermission",
+          "SNS:RemovePermission",
+          "SNS:DeleteTopic",
+          "SNS:Subscribe",
+          "SNS:ListSubscriptionsByTopic",
+          "SNS:Publish"
         ]
-    })
+        Resource = aws_sns_topic.aft_notifications.arn
+        Condition = {
+          StringEquals = {
+            "AWS:PrincipalOrgID": "${data.aws_organizations_organization.current.id}"
+          }
+        }
+      }
+    ]
+  })
 }
+
+data "aws_organizations_organization" "current" {}
